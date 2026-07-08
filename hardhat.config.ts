@@ -27,6 +27,24 @@ function getNetwork (name: string): { url: string, accounts: { mnemonic: string 
   // return getNetwork1(`wss://${name}.infura.io/ws/v3/${process.env.INFURA_ID}`)
 }
 
+const GOAT_DEPLOYER_PRIVATE_KEY_PLACEHOLDER = '0x1111111111111111111111111111111111111111111111111111111111111111'
+
+function getPrivateKeyNetwork (url: string): { url: string, accounts: string[] } {
+  const privateKeyFile = process.env.PRIVATE_KEY_FILE
+  const privateKey = privateKeyFile != null
+    ? fs.readFileSync(privateKeyFile, 'ascii').trim()
+    : GOAT_DEPLOYER_PRIVATE_KEY_PLACEHOLDER
+
+  if (!/^0x[0-9a-fA-F]{64}$/.test(privateKey)) {
+    throw new Error('PRIVATE_KEY_FILE must contain one 0x-prefixed private key')
+  }
+
+  return {
+    url,
+    accounts: [privateKey]
+  }
+}
+
 const optimizedCompilerSettings = {
   version: '0.8.28',
   settings: {
@@ -60,6 +78,15 @@ const config: HardhatUserConfig = {
     // github action starts localgeth service, for gas calculations
     localgeth: { url: 'http://localgeth:8545' },
     sepolia: getNetwork('sepolia'),
+    goat: {
+      ...getPrivateKeyNetwork(process.env.GOAT_RPC ?? 'https://rpc.goat.network'),
+      verify: {
+        etherscan: {
+          apiKey: process.env.GOAT_BLOCKSCOUT_API_KEY ?? 'blockscout',
+          apiUrl: process.env.GOAT_BLOCKSCOUT_API_URL ?? 'https://explorer.goat.network/api'
+        }
+      }
+    },
     proxy: getNetwork1('http://localhost:8545')
   },
   mocha: {

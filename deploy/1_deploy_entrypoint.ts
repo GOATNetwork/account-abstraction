@@ -17,4 +17,6 @@ const deployEntryPoint: DeployFunction = async function (hre: HardhatRuntimeEnvi
   console.log('==entrypoint addr=', ret.address)
 }
 
+deployEntryPoint.tags = ['EntryPoint']
+
 export default deployEntryPoint
